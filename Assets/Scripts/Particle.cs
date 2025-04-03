@@ -1,5 +1,7 @@
+using Unity.Burst;
 using Unity.Mathematics;
 
+[BurstCompile]
 public struct Particle
 {
     public float3 Position;

@@ -7,10 +7,13 @@ public class SimulationManager : MonoBehaviour
 {
     [Header("Simulation Settings")]
     [SerializeField] private int _particleCount = 1000;
-    [SerializeField] private float3 _simulationSize;
+    [SerializeField] private float3 _simulationBounds;
     [SerializeField] private int _solverIterations = 5;
+    [SerializeField] private float _gravity = 9.81f;
     [Header("Particle Properties")]
-    [SerializeField] private float _smoothRadius;
+    [SerializeField] private float _neighbourRadius;
+    [SerializeField] private float _drag = 0.99f;
+    [SerializeField] private float _collisionDamping = 0.5f;
     [Header("Rendering")]
     [SerializeField] private float _particleSize = 0.1f;
     [SerializeField] private Mesh _particleMesh;
@@ -21,6 +24,7 @@ public class SimulationManager : MonoBehaviour
     private FindNeighboursJob _findNeighboursJob;
     private PhaseJob _phaseJob;
     private UpdateParticlesJob _updateParticlesJob;
+    private EnvironmentCollisionJob _environmentCollisionJob;
 
     #region Lifecycle
 
@@ -36,6 +40,7 @@ public class SimulationManager : MonoBehaviour
 
     private void FixedUpdate()
     {
+        _externalForcesJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
@@ -47,7 +52,8 @@ public class SimulationManager : MonoBehaviour
 
         }
         JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64);
-        upHandle.Complete();
+        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
+        ecHandle.Complete();
     }
 
     private void OnDestroy()
@@ -55,6 +61,10 @@ public class SimulationManager : MonoBehaviour
         if (_particles.IsCreated)
         {
             _particles.Dispose();
+        }
+        if (_externalForcesJob.Forces.IsCreated)
+        {
+            _externalForcesJob.Forces.Dispose();
         }
     }
 
@@ -65,23 +75,41 @@ public class SimulationManager : MonoBehaviour
     [ContextMenu("Reset Simulation")]
     public void ResetSimulation()
     {
+        if (_particles.IsCreated)
+        {
+            _particles.Dispose();
+        }
         _particles = new NativeArray<Particle>(_particleCount, Allocator.Persistent);
         SetInitialParticles();
 
+        if (_externalForcesJob.Forces.IsCreated)
+        {
+            _externalForcesJob.Forces.Dispose();
+        }
         _externalForcesJob = new ExternalForcesJob
         {
-            Particles = _particles
+            Particles = _particles,
+            Forces = new NativeArray<Force>(1, Allocator.Persistent)
         };
+        _externalForcesJob.Forces[0] = new Force(new float3(0, -1, 0), _gravity);
         _findNeighboursJob = new FindNeighboursJob
         {
-            Particles = _particles
+            Particles = _particles,
+            Radius = _neighbourRadius
         };
         _phaseJob = new PhaseJob
         {
         };
         _updateParticlesJob = new UpdateParticlesJob
         {
-            Particles = _particles
+            Particles = _particles,
+            Drag = _drag,
+        };
+        _environmentCollisionJob = new EnvironmentCollisionJob
+        {
+            Particles = _particles,
+            SimulationBounds = _simulationBounds,
+            CollisionDamping = _collisionDamping
         };
     }
 
@@ -92,9 +120,9 @@ public class SimulationManager : MonoBehaviour
     private void SetInitialParticles()
     {
         int particlesPerAxis = Mathf.CeilToInt(Mathf.Pow(_particleCount, 1f / 3f));
-        float spacingX = _simulationSize.x / particlesPerAxis;
-        float spacingY = _simulationSize.y / particlesPerAxis;
-        float spacingZ = _simulationSize.z / particlesPerAxis;
+        float spacingX = _simulationBounds.x / particlesPerAxis;
+        float spacingY = _simulationBounds.y / particlesPerAxis;
+        float spacingZ = _simulationBounds.z / particlesPerAxis;
 
         int index = 0;
         for (int x = 0; x < particlesPerAxis; x++)
@@ -107,7 +135,7 @@ public class SimulationManager : MonoBehaviour
 
                     Particle particle = new Particle
                     {
-                        Position = new float3(x * spacingX, y * spacingY, z * spacingZ) - _simulationSize / 2,
+                        Position = new float3((x + 0.5f) * spacingX, (y + 0.5f) * spacingY, (z + 0.5f) * spacingZ) - _simulationBounds / 2,
                         Velocity = float3.zero,
                         Mass = 1f,
                         Density = 1f
