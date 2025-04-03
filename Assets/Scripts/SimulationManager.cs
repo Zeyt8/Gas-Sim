@@ -99,6 +99,8 @@ public class SimulationManager : MonoBehaviour
         };
         _phaseJob = new PhaseJob
         {
+            Particles = _particles,
+            DeltaTime = Time.fixedDeltaTime
         };
         _updateParticlesJob = new UpdateParticlesJob
         {
@@ -133,14 +135,8 @@ public class SimulationManager : MonoBehaviour
                 {
                     if (index >= _particleCount) return;
 
-                    Particle particle = new Particle
-                    {
-                        Position = new float3((x + 0.5f) * spacingX, (y + 0.5f) * spacingY, (z + 0.5f) * spacingZ) - _simulationBounds / 2,
-                        Velocity = float3.zero,
-                        Mass = 1f,
-                        Density = 1f
-                    };
-
+                    Particle particle = ParticleFactory.CreateParticle(ParticleFactory.ParticleType.Air);
+                    particle.Position = new float3((x + 0.5f) * spacingX, (y + 0.5f) * spacingY, (z + 0.5f) * spacingZ) - _simulationBounds / 2;
                     _particles[index] = particle;
                     index++;
                 }
