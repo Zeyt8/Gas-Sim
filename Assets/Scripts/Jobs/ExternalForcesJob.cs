@@ -4,7 +4,7 @@ using Unity.Collections;
 public struct ExternalForcesJob : IJobParallelFor
 {
     public NativeArray<Particle> Particles;
-    [ReadOnly] public NativeArray<Force> Forces;
+    [ReadOnly] public NativeArray<ForceEmitter> Forces;
     [ReadOnly] public float DeltaTime;
 
     public void Execute(int index)
@@ -12,8 +12,8 @@ public struct ExternalForcesJob : IJobParallelFor
         Particle particle = Particles[index];
         for (int i = 0; i < Forces.Length; i++)
         {
-            Force force = Forces[i];
-            particle.Velocity += force.FinalForce * DeltaTime;
+            ForceEmitter force = Forces[i];
+            particle.Velocity += force.GetAcceleration(particle) * DeltaTime;
         }
         Particles[index] = particle;
     }

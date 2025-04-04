@@ -99,9 +99,9 @@ public class SimulationManager : MonoBehaviour
         _externalForcesJob = new ExternalForcesJob
         {
             Particles = _particles,
-            Forces = new NativeArray<Force>(1, Allocator.Persistent)
+            Forces = new NativeArray<ForceEmitter>(1, Allocator.Persistent)
         };
-        _externalForcesJob.Forces[0] = new Force(new float3(0, -1, 0), _gravity);
+        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), _gravity);
         _findNeighboursJob = new FindNeighboursJob
         {
             Particles = _particles,
@@ -159,7 +159,8 @@ public class SimulationManager : MonoBehaviour
         {
             Particle particle = _particles[i];
             Vector3 position = particle.Position;
-            Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, Quaternion.identity, Vector3.one * _particleSize), _particleMaterial, 0, Camera.main);
+            Quaternion rotation = Quaternion.LookRotation(Camera.main.transform.position - position);
+            Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), _particleMaterial, 0, Camera.main);
         }
     }
 
