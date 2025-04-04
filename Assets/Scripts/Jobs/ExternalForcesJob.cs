@@ -13,7 +13,7 @@ public struct ExternalForcesJob : IJobParallelFor
         for (int i = 0; i < Forces.Length; i++)
         {
             Force force = Forces[i];
-            particle.Velocity += force.FinalForce * DeltaTime / particle.Mass;
+            particle.Velocity += force.FinalForce * DeltaTime;
         }
         Particles[index] = particle;
     }

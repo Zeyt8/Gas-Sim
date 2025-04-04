@@ -24,7 +24,7 @@ public struct PhaseJob : IJobParallelFor
         float chemicalPotential = 0;
 
         float3 ri = -Ci * gradient / (particle.GradientSum + 1e-6f);
-        particle.Position += ri;
+        particle.Position += ri * DeltaTime;
         particle.Density = density;
         particle.ChemicalPotential = chemicalPotential;
         Particles[index] = particle;

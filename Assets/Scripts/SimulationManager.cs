@@ -41,6 +41,7 @@ public class SimulationManager : MonoBehaviour
     private void FixedUpdate()
     {
         _externalForcesJob.DeltaTime = Time.fixedDeltaTime;
+        _phaseJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
@@ -66,6 +67,15 @@ public class SimulationManager : MonoBehaviour
         {
             _externalForcesJob.Forces.Dispose();
         }
+    }
+
+    #endregion
+
+    #region UI Callbacks
+
+    public void SetTimeScale(float timeScale)
+    {
+        Time.timeScale = timeScale;
     }
 
     #endregion
@@ -100,7 +110,6 @@ public class SimulationManager : MonoBehaviour
         _phaseJob = new PhaseJob
         {
             Particles = _particles,
-            DeltaTime = Time.fixedDeltaTime
         };
         _updateParticlesJob = new UpdateParticlesJob
         {
