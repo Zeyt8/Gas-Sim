@@ -8,7 +8,7 @@ public struct EnvironmentCollisionJob : IJobParallelFor
 {
     public NativeArray<Particle> Particles;
     [ReadOnly] public float3 SimulationBounds;
-    [ReadOnly] public float CollisionDamping;
+    [ReadOnly] public float CRCoeff;
 
     public void Execute(int index)
     {
@@ -17,16 +17,43 @@ public struct EnvironmentCollisionJob : IJobParallelFor
         float3 velocity = particle.Velocity;
         float3 boundsMin = -SimulationBounds / 2;
         float3 boundsMax = SimulationBounds / 2;
+        float3 collisionNormal = float3.zero;
 
-        position = math.clamp(position, boundsMin, boundsMax);
-        velocity *= math.select(1.0f, -1.0f, position == boundsMin | position == boundsMax);
-        if (math.any(position == boundsMin | position == boundsMax))
+        if (position.x < boundsMin.x)
         {
-            velocity *= CollisionDamping;
+            collisionNormal = new float3(1, 0, 0);
+            position.x = boundsMin.x;
+        }
+        else if (position.x > boundsMax.x)
+        {
+            collisionNormal = new float3(-1, 0, 0);
+            position.x = boundsMax.x;
+        }
+
+        if (position.y < boundsMin.y)
+        {
+            collisionNormal = new float3(0, 1, 0);
+            position.y = boundsMin.y;
+        }
+        else if (position.y > boundsMax.y)
+        {
+            collisionNormal = new float3(0, -1, 0);
+            position.y = boundsMax.y;
+        }
+
+        if (position.z < boundsMin.z)
+        {
+            collisionNormal = new float3(0, 0, 1);
+            position.z = boundsMin.z;
+        }
+        else if (position.z > boundsMax.z)
+        {
+            collisionNormal = new float3(0, 0, -1);
+            position.z = boundsMax.z;
         }
 
         particle.Position = position;
-        particle.Velocity = velocity;
+        particle.Velocity += -(1 + CRCoeff) * math.dot(velocity, collisionNormal) * collisionNormal;
         Particles[index] = particle;
     }
 }

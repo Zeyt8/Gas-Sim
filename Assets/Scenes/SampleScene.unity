@@ -853,11 +853,12 @@ MonoBehaviour:
     x: 1
     y: 0.5
     z: 0.75
+  _diffusionalCoefficient: 0.1
+  _epsilon: 0.01
   _solverIterations: 5
-  _gravity: 9.81
   _neighbourRadius: 1
   _drag: 1
-  _collisionDamping: 0.5
+  _crCoeff: 0.5
   _particleSize: 0.1
   _particleMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   _particleMaterial: {fileID: 2100000, guid: db030fdd1e41932498ab00cc5d34c1ff, type: 2}

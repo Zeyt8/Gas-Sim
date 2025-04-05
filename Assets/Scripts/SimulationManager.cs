@@ -8,12 +8,13 @@ public class SimulationManager : MonoBehaviour
     [Header("Simulation Settings")]
     [SerializeField] private int _particleCount = 1000;
     [SerializeField] private float3 _simulationBounds;
-    [SerializeField] private int _solverIterations = 5;
-    [SerializeField] private float _gravity = 9.81f;
+    [SerializeField] private float _diffusionalCoefficient = 0.1f;
+    [SerializeField] private float _epsilon = 0.01f;
+    [SerializeField] private uint _solverIterations = 5;
     [Header("Particle Properties")]
     [SerializeField] private float _neighbourRadius;
     [SerializeField] private float _drag = 0.99f;
-    [SerializeField] private float _collisionDamping = 0.5f;
+    [SerializeField] private float _crCoeff = 0.5f;
     [Header("Rendering")]
     [SerializeField] private float _particleSize = 0.1f;
     [SerializeField] private Mesh _particleMesh;
@@ -21,8 +22,10 @@ public class SimulationManager : MonoBehaviour
 
     private NativeArray<Particle> _particles;
     private ExternalForcesJob _externalForcesJob;
-    private FindNeighboursJob _findNeighboursJob;
+    private PhaseNeighboursJob _phaseNeighboursJob;
     private PhaseJob _phaseJob;
+    private DensityContraintNeighboursJob _densityConstraintNeighboursJob;
+    private DensityConstraintJob _densityConstraintJob;
     private UpdateParticlesJob _updateParticlesJob;
     private EnvironmentCollisionJob _environmentCollisionJob;
 
@@ -42,15 +45,18 @@ public class SimulationManager : MonoBehaviour
     {
         _externalForcesJob.DeltaTime = Time.fixedDeltaTime;
         _phaseJob.DeltaTime = Time.fixedDeltaTime;
+        _densityConstraintJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
-        JobHandle fnHandle = _findNeighboursJob.Schedule(_particles.Length, 64, efHandle);
-        JobHandle phHandle = _phaseJob.Schedule(_particles.Length, 64, fnHandle);
+        JobHandle pnHandle = _phaseNeighboursJob.Schedule(_particles.Length, 64, efHandle);
+        JobHandle phHandle = _phaseJob.Schedule(_particles.Length, 64, pnHandle);
         phHandle.Complete();
         for (int i = 0; i < _solverIterations; i++)
         {
-
+            JobHandle dcnHandle = _densityConstraintNeighboursJob.Schedule(_particles.Length, 64);
+            JobHandle dcHandle = _densityConstraintJob.Schedule(_particles.Length, 64, dcnHandle);
+            dcHandle.Complete();
         }
         JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64);
         JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
@@ -101,8 +107,8 @@ public class SimulationManager : MonoBehaviour
             Particles = _particles,
             Forces = new NativeArray<ForceEmitter>(1, Allocator.Persistent)
         };
-        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), _gravity);
-        _findNeighboursJob = new FindNeighboursJob
+        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
+        _phaseNeighboursJob = new PhaseNeighboursJob
         {
             Particles = _particles,
             Radius = _neighbourRadius
@@ -110,6 +116,18 @@ public class SimulationManager : MonoBehaviour
         _phaseJob = new PhaseJob
         {
             Particles = _particles,
+            DiffusionalCoefficient = _diffusionalCoefficient,
+            Epsilon = _epsilon,
+        };
+        _densityConstraintNeighboursJob = new DensityContraintNeighboursJob
+        {
+            Particles = _particles,
+            Radius = _neighbourRadius
+        };
+        _densityConstraintJob = new DensityConstraintJob
+        {
+            Particles = _particles,
+            DeltaTime = Time.fixedDeltaTime
         };
         _updateParticlesJob = new UpdateParticlesJob
         {
@@ -120,7 +138,7 @@ public class SimulationManager : MonoBehaviour
         {
             Particles = _particles,
             SimulationBounds = _simulationBounds,
-            CollisionDamping = _collisionDamping
+            CRCoeff = _crCoeff
         };
     }
 
@@ -144,7 +162,7 @@ public class SimulationManager : MonoBehaviour
                 {
                     if (index >= _particleCount) return;
 
-                    Particle particle = ParticleFactory.CreateParticle(ParticleFactory.ParticleType.Air);
+                    Particle particle = ParticleFactory.CreateParticle(0, ParticleFactory.ParticleType.Air);
                     particle.Position = new float3((x + 0.5f) * spacingX, (y + 0.5f) * spacingY, (z + 0.5f) * spacingZ) - _simulationBounds / 2;
                     _particles[index] = particle;
                     index++;
@@ -159,7 +177,7 @@ public class SimulationManager : MonoBehaviour
         {
             Particle particle = _particles[i];
             Vector3 position = particle.Position;
-            Quaternion rotation = Quaternion.LookRotation(Camera.main.transform.position - position);
+            Quaternion rotation = Quaternion.LookRotation(position - Camera.main.transform.position);
             Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), _particleMaterial, 0, Camera.main);
         }
     }

@@ -7,26 +7,17 @@ using Unity.Mathematics;
 public struct PhaseJob : IJobParallelFor
 {
     public NativeArray<Particle> Particles;
+    [ReadOnly] public float DiffusionalCoefficient;
+    [ReadOnly] public float Epsilon;
     [ReadOnly] public float DeltaTime;
 
     public void Execute(int index)
     {
         Particle particle = Particles[index];
-        float density = particle.Density;
-        float Ci = density / particle.RestDensity - 1;
-
-        float c1 = particle.Mass;
-        float c2 = particle.Mass;
-        float F = particle.DiffusionalCoefficient * (math.pow(c1 - 0.5f, 2) * math.pow(c2 - 0.5f, 2));
-
-        float3 gradient = particle.Gradient;
-        // TODO
-        float chemicalPotential = 0;
-
-        float3 ri = -Ci * gradient / (particle.GradientSum + 1e-6f);
-        particle.Position += ri * DeltaTime;
-        particle.Density = density;
-        particle.ChemicalPotential = chemicalPotential;
+        float c = particle.MassRatio;
+        //float F = DiffusionalCoefficient * (c - 0.5f) * (c - 0.5f) * ((1 - c) - 0.5f) * ((1 - c) - 0.5f);
+        float dF = DiffusionalCoefficient * 2 * (c - 0.5f) * ((1 - c) - 0.5f) * (1 * 2 * c);
+        particle.ChemicalPotential = dF - Epsilon * Epsilon * math.dot(particle.MassRatioGradient, particle.MassRatioGradient);
         Particles[index] = particle;
     }
 }

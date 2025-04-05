@@ -6,25 +6,22 @@ public class ParticleFactory
         Water
     }
 
-    public static Particle CreateParticle(ParticleType type)
+    public static Particle CreateParticle(uint phase, ParticleType type)
     {
         float mass = 0;
         float restDensity = 0;
-        float diffusionalCoefficient = 0;
         switch (type)
         {
             case ParticleType.Air:
                 mass = 0.001f;
                 restDensity = 1.225f;
-                diffusionalCoefficient = 0.1f;
                 break;
             case ParticleType.Water:
                 mass = 0.001f;
                 restDensity = 997f;
-                diffusionalCoefficient = 0.01f;
                 break;
         }
-        Particle particle = new Particle(mass, restDensity, diffusionalCoefficient);
+        Particle particle = new Particle(phase, mass, restDensity);
         return particle;
     }
 }

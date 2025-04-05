@@ -4,27 +4,37 @@ using Unity.Mathematics;
 [BurstCompile]
 public struct Particle
 {
+    // Particle properties
+    public readonly uint Phase;
     public readonly float Mass;
     public readonly float RestDensity;
-    public readonly float DiffusionalCoefficient;
 
+    // Particle state
     public float3 Position;
     public float3 Velocity;
     public float Density;
-    public float3 Gradient;
-    public float GradientSum;
+
+    public float MassRatio;
+    public float3 MassRatioGradient;
     public float ChemicalPotential;
 
-    public Particle(float mass, float restDensity, float diffusionalCoefficient)
+    public float3 DensityConstraintGradient;
+    public float DensityConstraintGradientSum;
+
+    public float DensityConstraint => Density / RestDensity - 1;
+
+    public Particle(uint phase, float mass, float restDensity)
     {
+        Phase = phase;
         Mass = mass;
         RestDensity = restDensity;
-        DiffusionalCoefficient = diffusionalCoefficient;
         Position = float3.zero;
         Velocity = float3.zero;
         Density = 0;
-        Gradient = float3.zero;
-        GradientSum = 0;
+        MassRatio = 0;
+        MassRatioGradient = float3.zero;
+        DensityConstraintGradient = float3.zero;
+        DensityConstraintGradientSum = 0;
         ChemicalPotential = 0;
     }
 }
