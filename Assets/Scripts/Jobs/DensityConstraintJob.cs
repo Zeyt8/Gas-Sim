@@ -14,11 +14,7 @@ public struct DensityConstraintJob : IJobParallelFor
     {
         Particle particle = Particles[index];
         float3 r = -particle.DensityConstraintGradient * particle.DensityConstraint / (particle.DensityConstraintGradientSum + 1e-6f);
-        if (index == 0)
-        {
-            Debug.Log(particle.DensityConstraintGradient);
-        }
-        particle.Position += r * DeltaTime;
+        particle.Position += r;
         Particles[index] = particle;
     }
 }

@@ -12,9 +12,8 @@ public struct UpdateParticlesJob : IJobParallelFor
     public void Execute(int index)
     {
         Particle particle = Particles[index];
-        particle.Velocity -= (Drag * particle.Velocity) * DeltaTime;
         // TODO: apply vorticity confinement, viscosity and reactive stress
-        particle.Position += particle.Velocity * DeltaTime;
+        particle.Velocity = (particle.Position - particle.PrevPosition) / DeltaTime;
         Particles[index] = particle;
     }
 }

@@ -11,6 +11,7 @@ public struct Particle
 
     // Particle state
     public float3 Position;
+    public float3 PrevPosition;
     public float3 Velocity;
     public float Density;
 
@@ -29,6 +30,7 @@ public struct Particle
         Mass = mass;
         RestDensity = restDensity;
         Position = float3.zero;
+        PrevPosition = float3.zero;
         Velocity = float3.zero;
         Density = 0;
         MassRatio = 0;
@@ -37,4 +39,5 @@ public struct Particle
         DensityConstraintGradientSum = 0;
         ChemicalPotential = 0;
     }
+
 }

@@ -856,7 +856,8 @@ MonoBehaviour:
   _diffusionalCoefficient: 0.1
   _epsilon: 0.01
   _solverIterations: 2
-  _neighbourRadius: 0.2
+  _gravity: 9.8
+  _neighbourRadius: 1
   _drag: 1
   _crCoeff: 0.5
   _particleSize: 0.1

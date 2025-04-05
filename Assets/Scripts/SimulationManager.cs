@@ -11,6 +11,7 @@ public class SimulationManager : MonoBehaviour
     [SerializeField] private float _diffusionalCoefficient = 0.1f;
     [SerializeField] private float _epsilon = 0.01f;
     [SerializeField] private uint _solverIterations = 5;
+    [SerializeField] private float _gravity = 9.81f;
     [Header("Particle Properties")]
     [SerializeField] private float _neighbourRadius;
     [SerializeField] private float _drag = 0.99f;
@@ -114,9 +115,9 @@ public class SimulationManager : MonoBehaviour
         _externalForcesJob = new ExternalForcesJob
         {
             Particles = _particles,
-            Forces = new NativeArray<ForceEmitter>(0, Allocator.Persistent)
+            Forces = new NativeArray<ForceEmitter>(1, Allocator.Persistent)
         };
-        //_externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
+        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), _gravity);
         if (_phaseNeighboursJob.Neighbours.IsCreated)
         {
             _phaseNeighboursJob.Neighbours.Dispose();
@@ -200,6 +201,7 @@ public class SimulationManager : MonoBehaviour
             Material mat = new Material(_particleMaterial);
             mat.color = new Color(particle.Density / (2 * particle.RestDensity), 0, 0);
             Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), mat, 0, Camera.main);
+            Debug.DrawRay(position, particle.DensityConstraintGradient);
         }
     }
 

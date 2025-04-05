@@ -15,6 +15,9 @@ public struct ExternalForcesJob : IJobParallelFor
             ForceEmitter force = Forces[i];
             particle.Velocity += force.GetAcceleration(particle) * DeltaTime;
         }
+
+        particle.PrevPosition = particle.Position;
+        particle.Position = particle.PrevPosition + DeltaTime * particle.Velocity;
         Particles[index] = particle;
     }
 }
