@@ -848,7 +848,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2132b253cbe809b48af06147769dc8c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _particleCount: 100
+  _particleCount: 200
   _simulationBounds:
     x: 1
     y: 0.5

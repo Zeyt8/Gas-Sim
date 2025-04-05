@@ -112,7 +112,7 @@ public struct DensityContraintNeighboursJob
                 Particle otherParticle = Particles[Neighbours[index][i]];
                 if (otherParticle.Position.Equals(particle.Position)) continue;
                 float3 r = otherParticle.Position - particle.Position;
-                float3 gradient = Poly6Gradient(r, Radius);
+                densityConstraintGradient += otherParticle.DensityConstraint * Poly6Gradient(r, Radius);
             }
             particle.DensityConstraintGradient = densityConstraintGradient;
             Particles[index] = particle;

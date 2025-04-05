@@ -74,6 +74,14 @@ public class SimulationManager : MonoBehaviour
         {
             _externalForcesJob.Forces.Dispose();
         }
+        if (_phaseNeighboursJob.Neighbours.IsCreated)
+        {
+            _phaseNeighboursJob.Neighbours.Dispose();
+        }
+        if (_densityConstraintNeighboursJob.Neighbours.IsCreated)
+        {
+            _densityConstraintNeighboursJob.Neighbours.Dispose();
+        }
     }
 
     #endregion
@@ -106,9 +114,9 @@ public class SimulationManager : MonoBehaviour
         _externalForcesJob = new ExternalForcesJob
         {
             Particles = _particles,
-            Forces = new NativeArray<ForceEmitter>(1, Allocator.Persistent)
+            Forces = new NativeArray<ForceEmitter>(0, Allocator.Persistent)
         };
-        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
+        //_externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
         if (_phaseNeighboursJob.Neighbours.IsCreated)
         {
             _phaseNeighboursJob.Neighbours.Dispose();
@@ -160,9 +168,9 @@ public class SimulationManager : MonoBehaviour
     private void SetInitialParticles()
     {
         int particlesPerAxis = Mathf.CeilToInt(Mathf.Pow(_particleCount, 1f / 3f));
-        float spacingX = _simulationBounds.x / particlesPerAxis;
-        float spacingY = _simulationBounds.y / particlesPerAxis;
-        float spacingZ = _simulationBounds.z / particlesPerAxis;
+        float spacingX = _simulationBounds.x / particlesPerAxis / 2;
+        float spacingY = _simulationBounds.y / particlesPerAxis / 2;
+        float spacingZ = _simulationBounds.z / particlesPerAxis / 2;
 
         int index = 0;
         for (int x = 0; x < particlesPerAxis; x++)
