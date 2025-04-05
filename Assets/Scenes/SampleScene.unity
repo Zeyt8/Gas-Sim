@@ -848,15 +848,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2132b253cbe809b48af06147769dc8c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _particleCount: 1000
+  _particleCount: 100
   _simulationBounds:
     x: 1
     y: 0.5
     z: 0.75
   _diffusionalCoefficient: 0.1
   _epsilon: 0.01
-  _solverIterations: 5
-  _neighbourRadius: 1
+  _solverIterations: 2
+  _neighbourRadius: 0.2
   _drag: 1
   _crCoeff: 0.5
   _particleSize: 0.1
