@@ -2,6 +2,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class SimulationManager : MonoBehaviour
 {
@@ -12,13 +13,14 @@ public class SimulationManager : MonoBehaviour
     [SerializeField, Range(0, 0.1f)] private float _epsilon = 0.01f;
     [SerializeField, Range(0, 10)] private uint _solverIterations = 5;
     [SerializeField] private float _gravity = 9.81f;
+    [SerializeField] private float _waterRatio = 0.1f;
     [Header("Particle Properties")]
     [SerializeField, Range(0, 1)] private float _neighbourRadius;
     [SerializeField, Range(0, 2)] private float _crCoeff = 0.5f;
     [Header("Rendering")]
     [SerializeField] private float _particleSize = 0.1f;
     [SerializeField] private Mesh _particleMesh;
-    [SerializeField] private Material _particleMaterial;
+    [SerializeField] private List<Material> _particleMaterials = new List<Material>();
 
     private NativeArray<Particle> _particles;
     private ExternalForcesJob _externalForcesJob;
@@ -119,6 +121,11 @@ public class SimulationManager : MonoBehaviour
     public void SetParticleCount(string count)
     {
         _particleCount = int.Parse(count);
+    }
+
+    public void SetWaterRatio(float ratio)
+    {
+        _waterRatio = ratio / 10;
     }
 
     public void SetTimeScale(float timeScale)
@@ -235,6 +242,9 @@ public class SimulationManager : MonoBehaviour
         float spacingY = _simulationBounds.y / particlesPerAxis;
         float spacingZ = _simulationBounds.z / particlesPerAxis;
 
+        int waterParticleCount = Mathf.CeilToInt(_particleCount * _waterRatio);
+        int currentWaterParticleCount = 0;
+
         int index = 0;
         for (int x = 0; x < particlesPerAxis; x++)
         {
@@ -244,7 +254,17 @@ public class SimulationManager : MonoBehaviour
                 {
                     if (index >= _particleCount) return;
 
-                    Particle particle = ParticleFactory.CreateParticle(0, ParticleFactory.ParticleType.Air);
+                    Particle particle;
+                    if (currentWaterParticleCount < waterParticleCount && (UnityEngine.Random.value) < _waterRatio)
+                    {
+                        particle = ParticleFactory.CreateParticle(1, ParticleFactory.ParticleType.Water);
+                        currentWaterParticleCount++;
+                    }
+                    else
+                    {
+                        particle = ParticleFactory.CreateParticle(0, ParticleFactory.ParticleType.Air);
+                    }
+
                     particle.Position = new float3((x + 0.5f) * spacingX, (y + 0.5f) * spacingY, (z + 0.5f) * spacingZ) - _simulationBounds / 2;
                     _particles[index] = particle;
                     index++;
@@ -261,7 +281,16 @@ public class SimulationManager : MonoBehaviour
             Particle particle = _particles[i];
             Vector3 position = particle.Position;
             Quaternion rotation = Quaternion.LookRotation(position - Camera.main.transform.position);
-            Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), _particleMaterial, 0, Camera.main);
+            Material particleMaterial;
+            if (particle.Phase == 0)
+            {
+                particleMaterial = _particleMaterials[0];
+            }
+            else
+            {
+                particleMaterial = _particleMaterials[1];
+            }
+            Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), particleMaterial, 0, Camera.main);
         }
     }
 

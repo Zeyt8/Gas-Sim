@@ -53,7 +53,7 @@ public struct DensityConstraintJob
         public void Execute(int index)
         {
             Particle particle = Particles[index];
-            float density = particle.Mass * Kernels.Poly6(float3.zero, Radius);
+            float density = 0;
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
@@ -81,7 +81,6 @@ public struct DensityConstraintJob
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
-                if (otherParticle.PredictedPosition.Equals(particle.PredictedPosition)) continue;
                 float3 r = otherParticle.PredictedPosition - particle.PredictedPosition;
                 densityConstraintGradient += otherParticle.Mass * Kernels.Poly6Gradient(r, Radius);
             }

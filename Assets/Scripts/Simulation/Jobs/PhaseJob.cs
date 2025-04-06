@@ -49,7 +49,7 @@ public struct PhaseJob
         public void Execute(int index)
         {
             Particle particle = Particles[index];
-            float ownPhaseMass = 0f;
+            float ownPhaseMass = 0;
             float otherPhaseMass = 0f;
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
@@ -65,7 +65,7 @@ public struct PhaseJob
                     otherPhaseMass += otherParticle.Mass * kernel;
                 }
             }
-            particle.MassRatio = ownPhaseMass / (ownPhaseMass + otherPhaseMass);
+            particle.MassRatio = ownPhaseMass / (ownPhaseMass + otherPhaseMass + 1e-6f);
             Particles[index] = particle;
         }
     }
