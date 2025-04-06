@@ -8,6 +8,8 @@ public struct UpdateParticlesJob : IJobParallelFor
 {
     public NativeArray<Particle> Particles;
     [ReadOnly] public float DeltaTime;
+    [ReadOnly] public float SurfaceTension;
+    [ReadOnly] public float Epsilon;
 
     public void Execute(int index)
     {
@@ -15,11 +17,26 @@ public struct UpdateParticlesJob : IJobParallelFor
         particle.Velocity = (particle.PredictedPosition - particle.Position) / DeltaTime;
         // TODO: apply vorticity confinement, viscosity and reactive stress
 
-        // Placeholder for reactive stress calculation
-        float3 reactiveStress = -particle.ChemicalPotential * particle.MassRatioGradient;
-        particle.Velocity += reactiveStress * DeltaTime;
+        //particle.Velocity += CalculateReactiveStress(particle) * DeltaTime;
 
         particle.Position = particle.PredictedPosition;
         Particles[index] = particle;
+    }
+
+    private float3 CalculateReactiveStress(Particle particle)
+    {
+        float3 reactiveStress = SurfaceTension / 2 * (Sf(particle.MassRatioGradient) + Sf(-particle.MassRatioGradient)) * X(particle.MassRatio, 1 - particle.MassRatio);
+
+        return reactiveStress;
+    }
+
+    private float3 Sf(float3 c)
+    {
+        return -6 * math.sqrt(2) * Epsilon * math.length(c) * c;
+    }
+
+    private float3 X(float c1, float c2)
+    {
+        return 5 * c1 * c2;
     }
 }

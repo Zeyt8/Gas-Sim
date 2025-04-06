@@ -1,7 +1,8 @@
-using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 
+[BurstCompile]
 public struct SpatialHashGrid : System.IDisposable
 {
     private readonly float _cellSize;

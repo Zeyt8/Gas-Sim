@@ -3,6 +3,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using System.Collections.Generic;
+using static UnityEngine.ParticleSystem;
 
 public class SimulationManager : MonoBehaviour
 {
@@ -14,9 +15,9 @@ public class SimulationManager : MonoBehaviour
     [SerializeField, Range(0, 10)] private uint _solverIterations = 5;
     [SerializeField] private float _gravity = 9.81f;
     [SerializeField] private float _waterRatio = 0.1f;
-    [Header("Particle Properties")]
     [SerializeField, Range(0, 1)] private float _neighbourRadius;
     [SerializeField, Range(0, 2)] private float _crCoeff = 0.5f;
+    [SerializeField, Range(0, 1)] private float _surfaceTension = 0.5f;
     [Header("Rendering")]
     [SerializeField] private float _particleSize = 0.1f;
     [SerializeField] private Mesh _particleMesh;
@@ -50,13 +51,20 @@ public class SimulationManager : MonoBehaviour
     private void FixedUpdate()
     {
         _externalForcesJob.DeltaTime = Time.fixedDeltaTime;
+
         _findNeighboursJob.Radius = _neighbourRadius;
+
         _phaseJob.Radius = _neighbourRadius;
         _phaseJob.DiffusionalCoefficient = _diffusionalCoefficient;
         _phaseJob.Epsilon = _epsilon;
+
         _densityConstraintJob.DeltaTime = Time.fixedDeltaTime;
         _densityConstraintJob.Radius = _neighbourRadius;
+
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
+        _updateParticlesJob.Epsilon = _epsilon;
+        _updateParticlesJob.SurfaceTension = _surfaceTension;
+
         _environmentCollisionJob.CRCoeff = _crCoeff;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
@@ -108,9 +116,11 @@ public class SimulationManager : MonoBehaviour
         for (int i = 0; i < _particles.Length; i++)
         {
             Gizmos.color = Color.white;
-            Gizmos.DrawSphere(_particles[i].Position, _particleSize);
+            Gizmos.DrawSphere(_particles[i].Position, _particleSize / 4);
             Gizmos.color = Color.red;
-            Gizmos.DrawRay(_particles[i].Position, _particles[i].DensityConstraintGradient);
+            Gizmos.DrawRay(_particles[i].Position, -_particles[i].DensityConstraintGradient * _particles[i].DensityConstraint / (_particles[i].DensityConstraintGradientSum + 1e-6f));
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(_particles[i].Position, _particles[i].Velocity);
         }
     }
 
@@ -122,7 +132,6 @@ public class SimulationManager : MonoBehaviour
     {
         _particleCount = int.Parse(count);
     }
-
     public void SetWaterRatio(float ratio)
     {
         _waterRatio = ratio / 10;
@@ -161,6 +170,11 @@ public class SimulationManager : MonoBehaviour
     public void SetCRCoeff(float crCoeff)
     {
         _crCoeff = crCoeff / 5;
+    }
+
+    public void SetSurfaceTension(float tension)
+    {
+        _surfaceTension = tension / 10;
     }
 
     #endregion

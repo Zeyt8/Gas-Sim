@@ -1,5 +1,7 @@
+using Unity.Burst;
 using Unity.Mathematics;
 
+[BurstCompile]
 public static class Kernels
 {
     public static float Poly6(float3 r, float h)

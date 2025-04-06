@@ -26,6 +26,7 @@ public struct PhaseJob
         new MassRatioGradientJob
         {
             Particles = Particles,
+            Radius = Radius,
             Neighbours = Neighbours
         }.Schedule(Particles.Length, 64).Complete();
 
@@ -75,6 +76,7 @@ public struct PhaseJob
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<Particle> Particles;
+        [ReadOnly] public float Radius;
         [NativeDisableContainerSafetyRestriction]
         [ReadOnly] public NativeArray<NativeList<int>> Neighbours;
 
@@ -86,6 +88,7 @@ public struct PhaseJob
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
                 float3 r = otherParticle.PredictedPosition - particle.PredictedPosition;
+                gradient += (otherParticle.MassRatio - particle.MassRatio) * Kernels.Poly6Gradient(r, Radius);
             }
             particle.MassRatioGradient = gradient;
             Particles[index] = particle;

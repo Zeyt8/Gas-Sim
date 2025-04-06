@@ -1,3 +1,6 @@
+using Unity.Burst;
+
+[BurstCompile]
 public class ParticleFactory
 {
     public enum ParticleType
