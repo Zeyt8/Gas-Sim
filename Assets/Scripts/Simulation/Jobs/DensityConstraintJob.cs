@@ -35,7 +35,7 @@ public struct DensityConstraintJob
             Neighbours = Neighbours
         }.Schedule(Particles.Length, 64).Complete();
 
-        new PredictPositionJob
+        new ApplyConstraintJob
         {
             Particles = Particles
         }.Schedule(Particles.Length, 64).Complete();
@@ -57,7 +57,7 @@ public struct DensityConstraintJob
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
-                float3 r = particle.Position - otherParticle.Position;
+                float3 r = particle.PredictedPosition - otherParticle.PredictedPosition;
                 density += otherParticle.Mass * Kernels.Poly6(r, Radius);
             }
             particle.Density = density;
@@ -81,8 +81,8 @@ public struct DensityConstraintJob
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
-                if (otherParticle.Position.Equals(particle.Position)) continue;
-                float3 r = otherParticle.Position - particle.Position;
+                if (otherParticle.PredictedPosition.Equals(particle.PredictedPosition)) continue;
+                float3 r = otherParticle.PredictedPosition - particle.PredictedPosition;
                 densityConstraintGradient += otherParticle.Mass * Kernels.Poly6Gradient(r, Radius);
             }
             particle.DensityConstraintGradient = densityConstraintGradient / particle.RestDensity;
@@ -113,7 +113,7 @@ public struct DensityConstraintJob
     }
 
     [BurstCompile]
-    private struct PredictPositionJob : IJobParallelFor
+    private struct ApplyConstraintJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<Particle> Particles;

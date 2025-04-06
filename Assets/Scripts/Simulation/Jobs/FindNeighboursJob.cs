@@ -20,7 +20,7 @@ public struct FindNeighboursJob : IJobParallelFor
         {
             if (i == index) continue;
             Particle otherParticle = Particles[i];
-            float distance = math.distance(particle.Position, otherParticle.Position);
+            float distance = math.distance(particle.PredictedPosition, otherParticle.PredictedPosition);
             if (distance < Radius)
             {
                 Neighbours[index].Add(i);
