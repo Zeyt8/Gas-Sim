@@ -11,19 +11,22 @@ public struct FindNeighboursJob : IJobParallelFor
     [ReadOnly] public float Radius;
     [NativeDisableContainerSafetyRestriction]
     public NativeArray<NativeList<int>> Neighbours;
+    [ReadOnly] public SpatialHashGrid SpatialHashGrid;
 
     public void Execute(int index)
     {
         Neighbours[index].Clear();
         Particle particle = Particles[index];
-        for (int i = 0; i < Particles.Length; i++)
+        NativeList<int> potentialNeighbors = SpatialHashGrid.GetNeighbors(particle.PredictedPosition, Allocator.Temp);
+        for (int i = 0; i < potentialNeighbors.Length; i++)
         {
-            if (i == index) continue;
-            Particle otherParticle = Particles[i];
+            int neighborIndex = potentialNeighbors[i];
+            if (neighborIndex == index) continue;
+            Particle otherParticle = Particles[neighborIndex];
             float distance = math.distance(particle.PredictedPosition, otherParticle.PredictedPosition);
             if (distance < Radius)
             {
-                Neighbours[index].Add(i);
+                Neighbours[index].Add(neighborIndex);
             }
         }
     }

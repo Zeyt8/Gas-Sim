@@ -30,6 +30,7 @@ public class SimulationManager : MonoBehaviour
 
     private NativeArray<NativeList<int>> _neighbours;
     private float _timeScale = 1f;
+    private SpatialHashGrid _spatialHashGrid;
 
     #region Lifecycle
 
@@ -57,6 +58,12 @@ public class SimulationManager : MonoBehaviour
         _environmentCollisionJob.CRCoeff = _crCoeff;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
+        efHandle.Complete();
+        _spatialHashGrid.Clear();
+        for (int i = 0; i < _particles.Length; i++)
+        {
+            _spatialHashGrid.AddParticle(i, _particles[i].PredictedPosition);
+        }
         JobHandle fnHandle = _findNeighboursJob.Schedule(_particles.Length, 64, efHandle);
         fnHandle.Complete();
         _phaseJob.Execute();
@@ -90,6 +97,7 @@ public class SimulationManager : MonoBehaviour
             }
             _neighbours.Dispose();
         }
+        _spatialHashGrid.Dispose();
     }
 
     private void OnDrawGizmos()
@@ -177,6 +185,12 @@ public class SimulationManager : MonoBehaviour
         }
         SetInitialParticles();
 
+        _spatialHashGrid = new SpatialHashGrid(_neighbourRadius, _particles.Length, Allocator.Persistent);
+        for (int i = 0; i < _particles.Length; i++)
+        {
+            _spatialHashGrid.AddParticle(i, _particles[i].Position);
+        }
+
         _externalForcesJob = new ExternalForcesJob
         {
             Particles = _particles,
@@ -186,7 +200,8 @@ public class SimulationManager : MonoBehaviour
         _findNeighboursJob = new FindNeighboursJob
         {
             Particles = _particles,
-            Neighbours = _neighbours
+            Neighbours = _neighbours,
+            SpatialHashGrid = _spatialHashGrid,
         };
         _phaseJob = new PhaseJob
         {
