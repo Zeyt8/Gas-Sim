@@ -49,9 +49,9 @@ public struct PhaseJob
             Particle particle = Particles[index];
             float ownPhaseMass = 0f;
             float otherPhaseMass = 0f;
-            for (int i = 0; i < Neighbours.Length; i++)
+            for (int i = 0; i < Neighbours[index].Length; i++)
             {
-                Particle otherParticle = Particles[i];
+                Particle otherParticle = Particles[Neighbours[index][i]];
                 if (otherParticle.Phase == particle.Phase)
                 {
                     ownPhaseMass += otherParticle.Mass;

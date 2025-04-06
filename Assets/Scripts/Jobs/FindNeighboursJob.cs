@@ -14,6 +14,7 @@ public struct FindNeighboursJob : IJobParallelFor
 
     public void Execute(int index)
     {
+        Neighbours[index].Clear();
         Particle particle = Particles[index];
         for (int i = 0; i < Particles.Length; i++)
         {

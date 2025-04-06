@@ -1,6 +1,8 @@
 using Unity.Jobs;
 using Unity.Collections;
+using Unity.Burst;
 
+[BurstCompile]
 public struct ExternalForcesJob : IJobParallelFor
 {
     public NativeArray<Particle> Particles;

@@ -71,16 +71,27 @@ public class SimulationManager : MonoBehaviour
         {
             _externalForcesJob.Forces.Dispose();
         }
-        for (int i = 0; i < _particleCount; i++)
-        {
-            if (_neighbours[i].IsCreated)
-            {
-                _neighbours[i].Dispose();
-            }
-        }
         if (_neighbours.IsCreated)
         {
+            for (int i = 0; i < _particleCount; i++)
+            {
+                if (_neighbours[i].IsCreated)
+                {
+                    _neighbours[i].Dispose();
+                }
+            }
             _neighbours.Dispose();
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        for (int i = 0; i < _particleCount; i++)
+        {
+            Gizmos.color = Color.white;
+            Gizmos.DrawSphere(_particles[i].Position, _particleSize);
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(_particles[i].Position, _particles[i].DensityConstraintGradient);
         }
     }
 
@@ -114,16 +125,18 @@ public class SimulationManager : MonoBehaviour
             Particles = _particles,
             Forces = new NativeArray<ForceEmitter>(1, Allocator.Persistent)
         };
+        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), _gravity);
         _findNeighboursJob = new FindNeighboursJob
         {
             Particles = _particles,
             Radius = _neighbourRadius,
-            Neighbours = new NativeArray<NativeList<int>>(_particleCount, Allocator.Persistent)
+            Neighbours = _neighbours
         };
-        //_externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
         _phaseJob = new PhaseJob
         {
             Particles = _particles,
+            Radius = _neighbourRadius,
+            Neighbours = _neighbours,
             DiffusionalCoefficient = _diffusionalCoefficient,
             Epsilon = _epsilon,
         };
@@ -153,9 +166,9 @@ public class SimulationManager : MonoBehaviour
     private void SetInitialParticles()
     {
         int particlesPerAxis = Mathf.CeilToInt(Mathf.Pow(_particleCount, 1f / 3f));
-        float spacingX = _simulationBounds.x / particlesPerAxis / 2;
-        float spacingY = _simulationBounds.y / particlesPerAxis / 2;
-        float spacingZ = _simulationBounds.z / particlesPerAxis / 2;
+        float spacingX = _simulationBounds.x / particlesPerAxis;
+        float spacingY = _simulationBounds.y / particlesPerAxis;
+        float spacingZ = _simulationBounds.z / particlesPerAxis;
 
         int index = 0;
         for (int x = 0; x < particlesPerAxis; x++)
@@ -166,7 +179,7 @@ public class SimulationManager : MonoBehaviour
                 {
                     if (index >= _particleCount) return;
 
-                    Particle particle = ParticleFactory.CreateParticle(0, ParticleFactory.ParticleType.Air, _particleCount, _simulationBounds.x * _simulationBounds.y * _simulationBounds.z);
+                    Particle particle = ParticleFactory.CreateParticle(0, ParticleFactory.ParticleType.Air);
                     particle.Position = new float3((x + 0.5f) * spacingX, (y + 0.5f) * spacingY, (z + 0.5f) * spacingZ) - _simulationBounds / 2;
                     _particles[index] = particle;
                     index++;
@@ -182,8 +195,6 @@ public class SimulationManager : MonoBehaviour
             Particle particle = _particles[i];
             Vector3 position = particle.Position;
             Quaternion rotation = Quaternion.LookRotation(position - Camera.main.transform.position);
-            //Material mat = new Material(_particleMaterial);
-            //mat.color = new Color(particle.Density / (2 * particle.RestDensity), 0, 0);
             Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), _particleMaterial, 0, Camera.main);
         }
     }
