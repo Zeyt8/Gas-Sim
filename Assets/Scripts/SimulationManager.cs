@@ -114,23 +114,16 @@ public class SimulationManager : MonoBehaviour
             Particles = _particles,
             Forces = new NativeArray<ForceEmitter>(1, Allocator.Persistent)
         };
-        _externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), _gravity);
-        if (_phaseNeighboursJob.Neighbours.IsCreated)
-        {
-            _phaseNeighboursJob.Neighbours.Dispose();
-        }
-        _phaseNeighboursJob = new PhaseNeighboursJob
+        _findNeighboursJob = new FindNeighboursJob
         {
             Particles = _particles,
             Radius = _neighbourRadius,
-            Neighbours = _neighbours
+            Neighbours = new NativeArray<NativeList<int>>(_particleCount, Allocator.Persistent)
         };
         //_externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
         _phaseJob = new PhaseJob
         {
             Particles = _particles,
-            Radius = _neighbourRadius,
-            Neighbours = _neighbours,
             DiffusionalCoefficient = _diffusionalCoefficient,
             Epsilon = _epsilon,
         };
@@ -189,10 +182,9 @@ public class SimulationManager : MonoBehaviour
             Particle particle = _particles[i];
             Vector3 position = particle.Position;
             Quaternion rotation = Quaternion.LookRotation(position - Camera.main.transform.position);
-            Material mat = new Material(_particleMaterial);
-            mat.color = new Color(particle.Density / (2 * particle.RestDensity), 0, 0);
-            Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), mat, 0, Camera.main);
-            Debug.DrawRay(position, particle.DensityConstraintGradient);
+            //Material mat = new Material(_particleMaterial);
+            //mat.color = new Color(particle.Density / (2 * particle.RestDensity), 0, 0);
+            Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), _particleMaterial, 0, Camera.main);
         }
     }
 
