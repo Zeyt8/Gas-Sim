@@ -14,7 +14,6 @@ public class SimulationManager : MonoBehaviour
     [SerializeField] private float _gravity = 9.81f;
     [Header("Particle Properties")]
     [SerializeField] private float _neighbourRadius;
-    [SerializeField] private float _drag = 0.99f;
     [SerializeField] private float _crCoeff = 0.5f;
     [Header("Rendering")]
     [SerializeField] private float _particleSize = 0.1f;
@@ -23,12 +22,13 @@ public class SimulationManager : MonoBehaviour
 
     private NativeArray<Particle> _particles;
     private ExternalForcesJob _externalForcesJob;
-    private PhaseNeighboursJob _phaseNeighboursJob;
+    private FindNeighboursJob _findNeighboursJob;
     private PhaseJob _phaseJob;
-    private DensityContraintNeighboursJob _densityConstraintNeighboursJob;
     private DensityConstraintJob _densityConstraintJob;
     private UpdateParticlesJob _updateParticlesJob;
     private EnvironmentCollisionJob _environmentCollisionJob;
+
+    private NativeArray<NativeList<int>> _neighbours;
 
     #region Lifecycle
 
@@ -45,20 +45,16 @@ public class SimulationManager : MonoBehaviour
     private void FixedUpdate()
     {
         _externalForcesJob.DeltaTime = Time.fixedDeltaTime;
-        _phaseJob.DeltaTime = Time.fixedDeltaTime;
         _densityConstraintJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
-        efHandle.Complete();
-        _phaseNeighboursJob.Execute();
-        JobHandle phHandle = _phaseJob.Schedule(_particles.Length, 64);
-        phHandle.Complete();
+        JobHandle fnHandle = _findNeighboursJob.Schedule(_particles.Length, 64, efHandle);
+        fnHandle.Complete();
+        _phaseJob.Execute();
         for (int i = 0; i < _solverIterations; i++)
         {
-            _densityConstraintNeighboursJob.Execute();
-            JobHandle dcHandle = _densityConstraintJob.Schedule(_particles.Length, 64);
-            dcHandle.Complete();
+            _densityConstraintJob.Execute();
         }
         JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64);
         JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
@@ -75,13 +71,16 @@ public class SimulationManager : MonoBehaviour
         {
             _externalForcesJob.Forces.Dispose();
         }
-        if (_phaseNeighboursJob.Neighbours.IsCreated)
+        for (int i = 0; i < _particleCount; i++)
         {
-            _phaseNeighboursJob.Neighbours.Dispose();
+            if (_neighbours[i].IsCreated)
+            {
+                _neighbours[i].Dispose();
+            }
         }
-        if (_densityConstraintNeighboursJob.Neighbours.IsCreated)
+        if (_neighbours.IsCreated)
         {
-            _densityConstraintNeighboursJob.Neighbours.Dispose();
+            _neighbours.Dispose();
         }
     }
 
@@ -101,17 +100,15 @@ public class SimulationManager : MonoBehaviour
     [ContextMenu("Reset Simulation")]
     public void ResetSimulation()
     {
-        if (_particles.IsCreated)
+        OnDestroy();
+        _neighbours = new NativeArray<NativeList<int>>(_particleCount, Allocator.Persistent);
+        for (int i = 0; i < _particleCount; i++)
         {
-            _particles.Dispose();
+            _neighbours[i] = new NativeList<int>(Allocator.Persistent);
         }
         _particles = new NativeArray<Particle>(_particleCount, Allocator.Persistent);
         SetInitialParticles();
 
-        if (_externalForcesJob.Forces.IsCreated)
-        {
-            _externalForcesJob.Forces.Dispose();
-        }
         _externalForcesJob = new ExternalForcesJob
         {
             Particles = _particles,
@@ -126,33 +123,27 @@ public class SimulationManager : MonoBehaviour
         {
             Particles = _particles,
             Radius = _neighbourRadius,
-            Neighbours = new NativeArray<NativeList<int>>(_particleCount, Allocator.Persistent)
+            Neighbours = _neighbours
         };
+        //_externalForcesJob.Forces[0] = new ForceEmitter(ForceEmitter.Type.Gravity, new float3(0, -1, 0), 9.81f);
         _phaseJob = new PhaseJob
         {
             Particles = _particles,
+            Radius = _neighbourRadius,
+            Neighbours = _neighbours,
             DiffusionalCoefficient = _diffusionalCoefficient,
             Epsilon = _epsilon,
-        };
-        if (_densityConstraintNeighboursJob.Neighbours.IsCreated)
-        {
-            _densityConstraintNeighboursJob.Neighbours.Dispose();
-        }
-        _densityConstraintNeighboursJob = new DensityContraintNeighboursJob
-        {
-            Particles = _particles,
-            Radius = _neighbourRadius,
-            Neighbours = new NativeArray<NativeList<int>>(_particleCount, Allocator.Persistent)
         };
         _densityConstraintJob = new DensityConstraintJob
         {
             Particles = _particles,
-            DeltaTime = Time.fixedDeltaTime
+            DeltaTime = Time.fixedDeltaTime,
+            Radius = _neighbourRadius,
+            Neighbours = _neighbours
         };
         _updateParticlesJob = new UpdateParticlesJob
         {
-            Particles = _particles,
-            Drag = _drag,
+            Particles = _particles
         };
         _environmentCollisionJob = new EnvironmentCollisionJob
         {
