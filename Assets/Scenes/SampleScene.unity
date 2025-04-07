@@ -957,7 +957,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.2, z: -1}
+  m_LocalPosition: {x: 0, y: -0.1, z: -0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2093,9 +2093,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _particleCount: 100
   _simulationBounds:
-    x: 1
-    y: 0.5
-    z: 0.75
+    x: 0.5
+    y: 0.25
+    z: 0.3
   _diffusionalCoefficient: 0.1
   _epsilon: 0.01
   _solverIterations: 1
@@ -2103,8 +2103,8 @@ MonoBehaviour:
   _waterRatio: 0.1
   _neighbourRadius: 1
   _crCoeff: 1
-  _surfaceTension: 1
-  _particleSize: 0.1
+  _surfaceTension: 0.01
+  _particleSize: 0.05
   _particleMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   _particleMaterials:
   - {fileID: 2100000, guid: db030fdd1e41932498ab00cc5d34c1ff, type: 2}
@@ -3777,10 +3777,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 978532530}
   m_HandleRect: {fileID: 810008606}
   m_Direction: 0
-  m_MinValue: 0
+  m_MinValue: 1
   m_MaxValue: 10
   m_WholeNumbers: 1
-  m_Value: 10
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -5040,7 +5040,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.5, z: 0.75}
+  m_LocalScale: {x: 0.5, y: 0.25, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -5481,7 +5481,7 @@ Transform:
   m_GameObject: {fileID: 1537944353}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.26, z: 0}
+  m_LocalPosition: {x: 0, y: -0.126, z: 0}
   m_LocalScale: {x: 10, y: 1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []

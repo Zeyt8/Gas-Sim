@@ -76,32 +76,32 @@ public class SimulationManager : MonoBehaviour
         _velocityGradientJob.DeltaTime = Time.fixedDeltaTime;
         _velocityGradientJob.Radius = _neighbourRadius;
 
-        JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
+        JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 32);
         efHandle.Complete();
         _environmentCollisionJob.UpdateVelocity = false;
-        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, efHandle);
+        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 32, efHandle);
         ecHandle.Complete();
         _spatialHashGrid.Clear();
         for (int i = 0; i < _particles.Length; i++)
         {
             _spatialHashGrid.AddParticle(i, _particles[i].PredictedPosition);
         }
-        JobHandle fnHandle = _findNeighboursJob.Schedule(_particles.Length, 64, efHandle);
+        JobHandle fnHandle = _findNeighboursJob.Schedule(_particles.Length, 32, efHandle);
         fnHandle.Complete();
         _phaseJob.Execute();
         for (int i = 0; i < _solverIterations; i++)
         {
             _densityConstraintJob.Execute();
-            _environmentCollisionJob.Schedule(_particles.Length, 64, efHandle).Complete();
+            _environmentCollisionJob.Schedule(_particles.Length, 32, efHandle).Complete();
         }
         _vorticityJob.Execute();
-        JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 64);
-        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, vgHandle);
+        JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 32);
+        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 32, vgHandle);
         _environmentCollisionJob.UpdateVelocity = true;
-        ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
+        ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 32, upHandle);
         ecHandle.Complete();
 
-        for (int i = 0; i < _particles.Length; i++)
+        /*for (int i = 0; i < _particles.Length; i++)
         {
             for (int j = 0; j < _neighbours[i].Length; j++)
             {
@@ -119,7 +119,7 @@ public class SimulationManager : MonoBehaviour
                     }
                 }
             }
-        }
+        }*/
     }
 
     private void OnDestroy()

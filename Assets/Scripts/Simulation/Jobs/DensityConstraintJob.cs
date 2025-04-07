@@ -21,14 +21,14 @@ public struct DensityConstraintJob
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64);
+        }.Schedule(Particles.Length, 32);
 
         JobHandle applyConstraintJobHandle = new ApplyConstraintJob
         {
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64, densityJobHandle);
+        }.Schedule(Particles.Length, 32, densityJobHandle);
 
         applyConstraintJobHandle.Complete();
     }

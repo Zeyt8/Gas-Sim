@@ -22,7 +22,7 @@ public struct VorticityJob
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64);
+        }.Schedule(Particles.Length, 32);
         
         // Calc vorticity gradient
         new VorticityGradientJob
@@ -30,7 +30,7 @@ public struct VorticityJob
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64, handle).Complete();
+        }.Schedule(Particles.Length, 32, handle).Complete();
     }
     
     
@@ -51,7 +51,7 @@ public struct VorticityJob
                 Particle otherParticle = Particles[Neighbours[index][i]];
                 float3 W = Kernels.SpikyGradient(particle.PredictedPosition - otherParticle.PredictedPosition, Radius);
                 float3 V = otherParticle.Velocity - particle.Velocity;
-                vorticity += math.cross(V, otherParticle.MassRatio * W);
+                vorticity += math.cross(V, W);
             }
             particle.Vorticity = vorticity;
             Particles[index] = particle;

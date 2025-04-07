@@ -23,7 +23,7 @@ public struct UpdateParticlesJob : IJobParallelFor
         particle.Velocity = (particle.PredictedPosition - particle.Position) / DeltaTime;
 
         particle.Velocity += CalculateReactiveStress(particle, index) * DeltaTime;
-        //particle.Velocity += CalculateVorticityForce(particle) / particle.Mass * DeltaTime;
+        particle.Velocity += CalculateVorticityForce(particle) * DeltaTime;
         particle.Velocity += Epsilon * particle.VelocityGradient; // Viscosity
 
         particle.Position = particle.PredictedPosition;
@@ -33,7 +33,7 @@ public struct UpdateParticlesJob : IJobParallelFor
     private float3 CalculateVorticityForce(Particle particle)
     {
         if (math.length(particle.VorticityGradient) == 0.0) return float3.zero;
-        float3 vorticityForce = Epsilon * math.cross(math.normalize(particle.VorticityGradient), particle.Vorticity);
+        float3 vorticityForce = Epsilon * Epsilon * math.cross(math.normalize(particle.VorticityGradient), particle.Vorticity);
         return vorticityForce;
     }
 

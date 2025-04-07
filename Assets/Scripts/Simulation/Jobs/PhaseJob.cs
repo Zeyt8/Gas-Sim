@@ -1,3 +1,4 @@
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -21,21 +22,21 @@ public struct PhaseJob
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64).Complete();
+        }.Schedule(Particles.Length, 32).Complete();
 
         new MassRatioGradientJob
         {
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64).Complete();
+        }.Schedule(Particles.Length, 32).Complete();
 
         new ChemicalPotentialJob
         {
             Particles = Particles,
             DiffusionalCoefficient = DiffusionalCoefficient,
             Epsilon = Epsilon
-        }.Schedule(Particles.Length, 64).Complete();
+        }.Schedule(Particles.Length, 32).Complete();
     }
 
     [BurstCompile]
@@ -88,7 +89,8 @@ public struct PhaseJob
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
                 float3 r = otherParticle.PredictedPosition - particle.PredictedPosition;
-                gradient += (otherParticle.MassRatio - particle.MassRatio) * Kernels.Poly6Gradient(r, Radius);
+                if (math.length(r) == 0) continue;
+                gradient += (otherParticle.MassRatio - particle.MassRatio) * math.normalize(r);
             }
             particle.MassRatioGradient = gradient;
             Particles[index] = particle;
