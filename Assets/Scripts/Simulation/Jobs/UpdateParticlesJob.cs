@@ -3,8 +3,9 @@ using Unity.Collections;
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 
-//[BurstCompile]
+[BurstCompile]
 public struct UpdateParticlesJob : IJobParallelFor
 {
     [NativeDisableParallelForRestriction]
@@ -22,8 +23,8 @@ public struct UpdateParticlesJob : IJobParallelFor
         particle.Velocity = (particle.PredictedPosition - particle.Position) / DeltaTime;
 
         particle.Velocity += CalculateReactiveStress(particle, index) * DeltaTime;
-        particle.Velocity += CalculateVorticityForce(particle) / particle.Mass * DeltaTime;
-        particle.Velocity += Epsilon * particle.VelocityGradient * DeltaTime; // Viscosity
+        //particle.Velocity += CalculateVorticityForce(particle) / particle.Mass * DeltaTime;
+        particle.Velocity += Epsilon * particle.VelocityGradient; // Viscosity
 
         particle.Position = particle.PredictedPosition;
         Particles[index] = particle;

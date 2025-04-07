@@ -21,6 +21,7 @@ public static class Kernels
         if (math.length(r) > h) return float3.zero;
 
         float coefficient = -945f / (32f * math.PI * math.pow(h, 9));
+        if (r2 == 0) return float3.zero; // Avoid division by zero
         return coefficient * math.pow(h2 - r2, 2) * math.normalize(r);
     }
 
@@ -38,6 +39,7 @@ public static class Kernels
         if (r_len > h) return float3.zero;
 
         float coefficient = -45f / (math.PI * math.pow(h, 6) * r_len);
+        if (r_len == 0) return float3.zero; // Avoid division by zero
         return coefficient * math.pow(h - r_len, 2) * math.normalize(r);
     }
 }

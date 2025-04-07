@@ -53,7 +53,7 @@ public struct DensityConstraintJob
                 Particle otherParticle = Particles[Neighbours[index][i]];
                 float3 r = particle.PredictedPosition - otherParticle.PredictedPosition;
                 density += otherParticle.Mass * Kernels.Poly6(r, Radius);
-                densityConstraintGradient += otherParticle.Mass * Kernels.SpikyGradient(r, Radius);
+                densityConstraintGradient += otherParticle.Mass * Kernels.SpikyGradient(-r, Radius);
                 densityConstraintGradientSum += math.lengthsq(otherParticle.Mass * Kernels.SpikyGradient(r, Radius)) / particle.RestDensity;
             }
             particle.Density = density;
@@ -85,6 +85,7 @@ public struct DensityConstraintJob
                 p += (lambda + otherLambda) * Kernels.SpikyGradient(r, Radius);
             }
             particle.PredictedPosition += p / particle.RestDensity;
+            particle.PredictedPositionWithoutCollision += p / particle.RestDensity;
             Particles[index] = particle;
         }
     }

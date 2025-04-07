@@ -18,6 +18,7 @@ public struct ExternalForcesJob : IJobParallelFor
             particle.Velocity += force.GetAcceleration(particle) * DeltaTime;
         }
         particle.PredictedPosition = particle.Position + particle.Velocity * DeltaTime;
+        particle.PredictedPositionWithoutCollision = particle.PredictedPosition;
         Particles[index] = particle;
     }
 }

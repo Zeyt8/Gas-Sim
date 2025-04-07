@@ -16,12 +16,12 @@ public class ParticleFactory
         switch (type)
         {
             case ParticleType.Air:
-                mass = 1f;
-                restDensity = 1.225f;
+                mass = 0.1f;
+                restDensity = 1f;
                 break;
             case ParticleType.Water:
-                mass = 1f;
-                restDensity = 997f;
+                mass = 0.2f;
+                restDensity = 2f;
                 break;
         }
         Particle particle = new Particle(phase, mass, restDensity);

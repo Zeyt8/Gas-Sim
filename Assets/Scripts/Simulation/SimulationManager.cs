@@ -78,6 +78,9 @@ public class SimulationManager : MonoBehaviour
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
         efHandle.Complete();
+        _environmentCollisionJob.UpdateVelocity = false;
+        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, efHandle);
+        ecHandle.Complete();
         _spatialHashGrid.Clear();
         for (int i = 0; i < _particles.Length; i++)
         {
@@ -89,12 +92,34 @@ public class SimulationManager : MonoBehaviour
         for (int i = 0; i < _solverIterations; i++)
         {
             _densityConstraintJob.Execute();
+            _environmentCollisionJob.Schedule(_particles.Length, 64, efHandle).Complete();
         }
         _vorticityJob.Execute();
         JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 64);
         JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, vgHandle);
-        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
+        _environmentCollisionJob.UpdateVelocity = true;
+        ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
         ecHandle.Complete();
+
+        for (int i = 0; i < _particles.Length; i++)
+        {
+            for (int j = 0; j < _neighbours[i].Length; j++)
+            {
+                int neighbourIndex = _neighbours[i][j];
+                if (neighbourIndex != i)
+                {
+                    Particle particle = _particles[i];
+                    Particle neighbour = _particles[neighbourIndex];
+                    float3 r = particle.Position - neighbour.Position;
+                    float distance = math.length(r);
+                    if (distance < 1e-6f)
+                    {
+                        particle.Position += new float3(UnityEngine.Random.insideUnitSphere * 1e-5f);
+                        _particles[i] = particle;
+                    }
+                }
+            }
+        }
     }
 
     private void OnDestroy()
@@ -183,7 +208,7 @@ public class SimulationManager : MonoBehaviour
 
     public void SetSurfaceTension(float tension)
     {
-        _surfaceTension = tension / 10;
+        _surfaceTension = tension / 100;
     }
 
     #endregion

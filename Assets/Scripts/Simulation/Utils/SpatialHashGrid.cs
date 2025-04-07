@@ -33,13 +33,14 @@ public struct SpatialHashGrid : System.IDisposable
             {
                 for (int z = -1; z <= 1; z++)
                 {
-                    int3 neighborCell = new int3
+                    int3 neighborCell = cell + new int3(x, y, z);
+                    /*int3 neighborCell = new int3
                     {
                         x = cell.x + x % _gridSize.x,
                         y = cell.y + y % _gridSize.y,
                         z = cell.z + z % _gridSize.z,
 
-                    };
+                    };*/
                     if (_grid.TryGetFirstValue(neighborCell, out int neighborIndex, out NativeParallelMultiHashMapIterator<int3> iterator))
                     {
                         do

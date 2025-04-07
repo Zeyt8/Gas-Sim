@@ -12,6 +12,7 @@ public struct Particle
     // Particle state
     public float3 Position;
     public float3 PredictedPosition;
+    public float3 PredictedPositionWithoutCollision;
     public float3 Velocity;
     public float Density;
     public float3 Vorticity;
@@ -36,6 +37,7 @@ public struct Particle
         RestDensity = restDensity;
         Position = float3.zero;
         PredictedPosition = float3.zero;
+        PredictedPositionWithoutCollision = float3.zero;
         Velocity = float3.zero;
         Density = 0;
         Vorticity = float3.zero;

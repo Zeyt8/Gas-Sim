@@ -9,11 +9,20 @@ public struct EnvironmentCollisionJob : IJobParallelFor
     public NativeArray<Particle> Particles;
     [ReadOnly] public float3 SimulationBounds;
     [ReadOnly] public float CRCoeff;
+    [ReadOnly] public bool UpdateVelocity;
 
     public void Execute(int index)
     {
         Particle particle = Particles[index];
-        float3 position = particle.Position;
+        float3 position;
+        if (UpdateVelocity)
+        {
+            position = particle.Position;
+        }
+        else
+        {
+            position = particle.PredictedPosition;
+        }
         float3 velocity = particle.Velocity;
         float3 boundsMin = -SimulationBounds / 2;
         float3 boundsMax = SimulationBounds / 2;
@@ -52,8 +61,18 @@ public struct EnvironmentCollisionJob : IJobParallelFor
             position.z = boundsMax.z;
         }
 
-        particle.Position = position;
-        particle.Velocity += -(1 + CRCoeff) * math.dot(velocity, collisionNormal) * collisionNormal;
+        if (UpdateVelocity)
+        {
+            particle.Position = position;
+        }
+        else
+        {
+            particle.PredictedPosition = position;
+        }
+        if (UpdateVelocity)
+        {
+            particle.Velocity += -(1 + CRCoeff) * math.dot(velocity, collisionNormal) * collisionNormal;
+        }
         Particles[index] = particle;
     }
 }

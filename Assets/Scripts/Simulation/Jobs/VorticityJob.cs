@@ -17,12 +17,12 @@ public struct VorticityJob
     public void Execute()
     {
         // Calc vorticity based on neighbouring density and speed differences
-        new VorticityValueJob
+        JobHandle handle = new VorticityValueJob
         {
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64).Complete();
+        }.Schedule(Particles.Length, 64);
         
         // Calc vorticity gradient
         new VorticityGradientJob
@@ -30,7 +30,7 @@ public struct VorticityJob
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64).Complete();
+        }.Schedule(Particles.Length, 64, handle).Complete();
     }
     
     
@@ -49,7 +49,7 @@ public struct VorticityJob
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
-                float3 W = Kernels.Poly6Gradient(particle.PredictedPosition - otherParticle.PredictedPosition, Radius);
+                float3 W = Kernels.SpikyGradient(particle.PredictedPosition - otherParticle.PredictedPosition, Radius);
                 float3 V = otherParticle.Velocity - particle.Velocity;
                 vorticity += math.cross(V, otherParticle.MassRatio * W);
             }
