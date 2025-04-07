@@ -91,9 +91,9 @@ public class SimulationManager : MonoBehaviour
         }
         _vorticityJob.Execute();
         JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 64);
-        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, vgHandle);
-        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
-        ecHandle.Complete();
+        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, vgHandle);
+        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, ecHandle);
+        upHandle.Complete();
     }
 
     private void OnDestroy()
@@ -214,7 +214,7 @@ public class SimulationManager : MonoBehaviour
         }
         SetInitialParticles();
 
-        _spatialHashGrid = new SpatialHashGrid(_neighbourRadius, _particles.Length, Allocator.Persistent);
+        _spatialHashGrid = new SpatialHashGrid(_neighbourRadius, _particles.Length, Allocator.Persistent, _simulationBounds);
         for (int i = 0; i < _particles.Length; i++)
         {
             _spatialHashGrid.AddParticle(i, _particles[i].Position);
