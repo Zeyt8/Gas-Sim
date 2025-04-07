@@ -15,7 +15,8 @@ public class SimulationManager : MonoBehaviour
     [SerializeField, Range(0, 10)] private uint _solverIterations = 5;
     [SerializeField] private float _gravity = 9.81f;
     [SerializeField] private float _waterRatio = 0.1f;
-    [SerializeField, Range(0, 1)] private float _neighbourRadius;
+    [SerializeField] private float _neighbourRadius;
+    [SerializeField] private float _smoothingRadius = 100;
     [SerializeField, Range(0, 2)] private float _crCoeff = 0.5f;
     [SerializeField, Range(0, 1)] private float _surfaceTension = 0.5f;
     [Header("Rendering")]
@@ -56,12 +57,12 @@ public class SimulationManager : MonoBehaviour
 
         _findNeighboursJob.Radius = _neighbourRadius;
 
-        _phaseJob.Radius = _neighbourRadius;
+        _phaseJob.Radius = _smoothingRadius;
         _phaseJob.DiffusionalCoefficient = _diffusionalCoefficient;
         _phaseJob.Epsilon = _epsilon;
 
         _densityConstraintJob.DeltaTime = Time.fixedDeltaTime;
-        _densityConstraintJob.Radius = _neighbourRadius;
+        _densityConstraintJob.Radius = _smoothingRadius;
 
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.Epsilon = _epsilon;
@@ -70,10 +71,10 @@ public class SimulationManager : MonoBehaviour
         _environmentCollisionJob.CRCoeff = _crCoeff;
 
         _vorticityJob.DeltaTime = Time.fixedDeltaTime;
-        _vorticityJob.Radius = _neighbourRadius;
+        _vorticityJob.Radius = _smoothingRadius;
 
         _velocityGradientJob.DeltaTime = Time.fixedDeltaTime;
-        _velocityGradientJob.Radius = _neighbourRadius;
+        _velocityGradientJob.Radius = _smoothingRadius;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
         efHandle.Complete();
@@ -90,10 +91,8 @@ public class SimulationManager : MonoBehaviour
             _densityConstraintJob.Execute();
         }
         _vorticityJob.Execute();
-        _velocityGradientJob.Neighbours = _neighbours;
         JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 64);
-        vgHandle.Complete();
-        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64);
+        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, vgHandle);
         JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
         ecHandle.Complete();
     }
@@ -129,10 +128,8 @@ public class SimulationManager : MonoBehaviour
         {
             Gizmos.color = Color.white;
             Gizmos.DrawSphere(_particles[i].Position, _particleSize / 4);
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(_particles[i].Position, -_particles[i].DensityConstraintGradient * _particles[i].DensityConstraint / (_particles[i].DensityConstraintGradientSum + 1e-6f));
             Gizmos.color = Color.blue;
-            Gizmos.DrawRay(_particles[i].Position, _particles[i].Velocity);
+            Gizmos.DrawRay(_particles[i].Position, _particles[i].DensityConstraintGradient);
         }
     }
 
@@ -174,9 +171,9 @@ public class SimulationManager : MonoBehaviour
         _gravity = float.Parse(gravity);
     }
 
-    public void SetNeighbourRadius(float radius)
+    public void SetSmoothingRadius(float radius)
     {
-        _neighbourRadius = radius / 10;
+        _smoothingRadius = radius * 10;
     }
 
     public void SetCRCoeff(float crCoeff)

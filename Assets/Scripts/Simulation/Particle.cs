@@ -26,7 +26,7 @@ public struct Particle
     public float3 DensityConstraintGradient;
     public float DensityConstraintGradientSum;
 
-    public float DensityConstraint => Density / RestDensity - 1;
+    public readonly float DensityConstraint => Density / RestDensity - 1;
 
     public Particle(uint phase, float mass, float restDensity)
     {

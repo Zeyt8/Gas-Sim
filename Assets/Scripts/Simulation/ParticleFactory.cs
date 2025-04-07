@@ -16,7 +16,7 @@ public class ParticleFactory
         switch (type)
         {
             case ParticleType.Air:
-                mass = 0.1f;
+                mass = 1f;
                 restDensity = 1.225f;
                 break;
             case ParticleType.Water:
