@@ -20,7 +20,7 @@ public class ParticleFactory
                 restDensity = 1.225f;
                 break;
             case ParticleType.Water:
-                mass = 1;
+                mass = 1f;
                 restDensity = 997f;
                 break;
         }

@@ -19,6 +19,7 @@ public struct Particle
     public float MassRatio;
     public float3 MassRatioGradient;
     public float ChemicalPotential;
+    public float3 SurfaceTensionForce;
 
     public float3 VorticityGradient; //η
     public float3 VelocityGradient;
@@ -40,6 +41,7 @@ public struct Particle
         Vorticity = float3.zero;
         MassRatio = 0;
         MassRatioGradient = float3.zero;
+        SurfaceTensionForce = float3.zero;
         DensityConstraintGradient = float3.zero;
         DensityConstraintGradientSum = 0;
         ChemicalPotential = 0;

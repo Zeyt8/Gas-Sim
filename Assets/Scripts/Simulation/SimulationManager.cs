@@ -66,6 +66,7 @@ public class SimulationManager : MonoBehaviour
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.Epsilon = _epsilon;
         _updateParticlesJob.SurfaceTension = _surfaceTension;
+        _updateParticlesJob.Radius = _neighbourRadius;
 
         _environmentCollisionJob.CRCoeff = _crCoeff;
 
@@ -244,7 +245,8 @@ public class SimulationManager : MonoBehaviour
         };
         _updateParticlesJob = new UpdateParticlesJob
         {
-            Particles = _particles
+            Particles = _particles,
+            Neighbours = _neighbours,
         };
         _environmentCollisionJob = new EnvironmentCollisionJob
         {
@@ -323,7 +325,6 @@ public class SimulationManager : MonoBehaviour
                 particleMaterial = _particleMaterials[1];
             }
             Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), particleMaterial, 0, Camera.main);
-            print($"Particle {i}: Position: {position}, D: {particle.Density}");
         }
     }
 
