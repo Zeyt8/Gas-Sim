@@ -21,6 +21,7 @@ public struct Particle
     public float ChemicalPotential;
 
     public float3 VorticityGradient; //η
+    public float3 VelocityGradient;
 
     public float3 DensityConstraintGradient;
     public float DensityConstraintGradientSum;
@@ -43,6 +44,7 @@ public struct Particle
         DensityConstraintGradientSum = 0;
         ChemicalPotential = 0;
         VorticityGradient = float3.zero;
+        VelocityGradient = float3.zero;
     }
 
 }

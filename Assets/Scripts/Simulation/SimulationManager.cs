@@ -31,6 +31,7 @@ public class SimulationManager : MonoBehaviour
     private UpdateParticlesJob _updateParticlesJob;
     private EnvironmentCollisionJob _environmentCollisionJob;
     private VorticityJob _vorticityJob;
+    private VelocityGradientJob _velocityGradientJob;
 
     private NativeArray<NativeList<int>> _neighbours;
     private float _timeScale = 1f;
@@ -71,6 +72,9 @@ public class SimulationManager : MonoBehaviour
         _vorticityJob.DeltaTime = Time.fixedDeltaTime;
         _vorticityJob.Radius = _neighbourRadius;
 
+        _velocityGradientJob.DeltaTime = Time.fixedDeltaTime;
+        _velocityGradientJob.Radius = _neighbourRadius;
+
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
         efHandle.Complete();
         _spatialHashGrid.Clear();
@@ -86,6 +90,9 @@ public class SimulationManager : MonoBehaviour
             _densityConstraintJob.Execute();
         }
         _vorticityJob.Execute();
+        _velocityGradientJob.Neighbours = _neighbours;
+        JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 64);
+        vgHandle.Complete();
         JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64);
         JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
         ecHandle.Complete();
@@ -249,6 +256,11 @@ public class SimulationManager : MonoBehaviour
             SimulationBounds = _simulationBounds
         };
         _vorticityJob = new VorticityJob
+        {
+            Particles = _particles,
+            Neighbours = _neighbours,
+        };
+        _velocityGradientJob = new VelocityGradientJob
         {
             Particles = _particles,
             Neighbours = _neighbours,
