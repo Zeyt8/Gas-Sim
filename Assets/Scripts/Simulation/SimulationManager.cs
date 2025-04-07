@@ -91,9 +91,9 @@ public class SimulationManager : MonoBehaviour
         }
         _vorticityJob.Execute();
         JobHandle vgHandle = _velocityGradientJob.Schedule(_particles.Length, 64);
-        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, vgHandle);
-        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, ecHandle);
-        upHandle.Complete();
+        JobHandle upHandle = _updateParticlesJob.Schedule(_particles.Length, 64, vgHandle);
+        JobHandle ecHandle = _environmentCollisionJob.Schedule(_particles.Length, 64, upHandle);
+        ecHandle.Complete();
     }
 
     private void OnDestroy()
