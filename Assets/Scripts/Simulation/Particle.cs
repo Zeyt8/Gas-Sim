@@ -14,10 +14,13 @@ public struct Particle
     public float3 PredictedPosition;
     public float3 Velocity;
     public float Density;
+    public float3 Vorticity;
 
     public float MassRatio;
     public float3 MassRatioGradient;
     public float ChemicalPotential;
+
+    public float3 VorticityGradient; //η
 
     public float3 DensityConstraintGradient;
     public float DensityConstraintGradientSum;
@@ -33,11 +36,13 @@ public struct Particle
         PredictedPosition = float3.zero;
         Velocity = float3.zero;
         Density = 0;
+        Vorticity = float3.zero;
         MassRatio = 0;
         MassRatioGradient = float3.zero;
         DensityConstraintGradient = float3.zero;
         DensityConstraintGradientSum = 0;
         ChemicalPotential = 0;
+        VorticityGradient = float3.zero;
     }
 
 }

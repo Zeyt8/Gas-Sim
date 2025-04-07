@@ -2,6 +2,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Burst;
 using Unity.Mathematics;
+using UnityEngine;
 
 [BurstCompile]
 public struct UpdateParticlesJob : IJobParallelFor
@@ -18,9 +19,17 @@ public struct UpdateParticlesJob : IJobParallelFor
         // TODO: apply vorticity confinement, viscosity and reactive stress
 
         //particle.Velocity += CalculateReactiveStress(particle) * DeltaTime;
+        particle.Velocity += CalculateVorticityForce(particle) * DeltaTime;
 
-        particle.Position = particle.PredictedPosition;
+        particle.Position += particle.Velocity * DeltaTime;
         Particles[index] = particle;
+    }
+
+    private float3 CalculateVorticityForce(Particle particle)
+    {
+        if (math.length(particle.VorticityGradient) == 0.0) return float3.zero;
+        float3 vorticityForce = 0.01f * math.cross(math.normalize(particle.VorticityGradient), particle.Vorticity);
+        return vorticityForce;
     }
 
     private float3 CalculateReactiveStress(Particle particle)
@@ -40,3 +49,4 @@ public struct UpdateParticlesJob : IJobParallelFor
         return 5 * c1 * c2;
     }
 }
+
