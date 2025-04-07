@@ -2,7 +2,6 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Burst;
 using Unity.Mathematics;
-using UnityEngine;
 
 [BurstCompile]
 public struct UpdateParticlesJob : IJobParallelFor

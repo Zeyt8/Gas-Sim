@@ -23,25 +23,12 @@ public struct DensityConstraintJob
             Neighbours = Neighbours
         }.Schedule(Particles.Length, 64);
 
-        JobHandle densityConstraintGradientJobHandle = new DensityConstraintGradientJob
-        {
-            Particles = Particles,
-            Radius = Radius,
-            Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64, densityJobHandle);
-
-        JobHandle densityConstraintGradientSumJobHandle = new DensityConstraintGradientSumJob
-        {
-            Particles = Particles,
-            Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64, densityConstraintGradientJobHandle);
-
         JobHandle applyConstraintJobHandle = new ApplyConstraintJob
         {
             Particles = Particles,
             Radius = Radius,
             Neighbours = Neighbours
-        }.Schedule(Particles.Length, 64, densityConstraintGradientSumJobHandle);
+        }.Schedule(Particles.Length, 64, densityJobHandle);
 
         applyConstraintJobHandle.Complete();
     }
@@ -59,59 +46,19 @@ public struct DensityConstraintJob
         {
             Particle particle = Particles[index];
             float density = particle.Mass * Kernels.Poly6(float3.zero, Radius);
+            float3 densityConstraintGradient = float3.zero;
+            float densityConstraintGradientSum = 0f;
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
                 float3 r = particle.PredictedPosition - otherParticle.PredictedPosition;
                 density += otherParticle.Mass * Kernels.Poly6(r, Radius);
+                densityConstraintGradient += otherParticle.Mass * Kernels.SpikyGradient(r, Radius);
+                densityConstraintGradientSum += math.lengthsq(otherParticle.Mass * Kernels.SpikyGradient(r, Radius)) / particle.RestDensity;
             }
             particle.Density = density;
-            Particles[index] = particle;
-        }
-    }
-
-    [BurstCompile]
-    private struct DensityConstraintGradientJob : IJobParallelFor
-    {
-        [NativeDisableParallelForRestriction]
-        public NativeArray<Particle> Particles;
-        [ReadOnly] public float Radius;
-        [NativeDisableContainerSafetyRestriction]
-        [ReadOnly] public NativeArray<NativeList<int>> Neighbours;
-
-        public void Execute(int index)
-        {
-            Particle particle = Particles[index];
-            float3 densityConstraintGradient = float3.zero;
-            for (int i = 0; i < Neighbours[index].Length; i++)
-            {
-                Particle otherParticle = Particles[Neighbours[index][i]];
-                float3 r = otherParticle.PredictedPosition - particle.PredictedPosition;
-                densityConstraintGradient += otherParticle.Mass * Kernels.SpikyGradient(r, Radius);
-            }
             particle.DensityConstraintGradient = densityConstraintGradient / particle.RestDensity;
-            Particles[index] = particle;
-        }
-    }
-
-    [BurstCompile]
-    private struct DensityConstraintGradientSumJob : IJobParallelFor
-    {
-        [NativeDisableParallelForRestriction]
-        public NativeArray<Particle> Particles;
-        [NativeDisableContainerSafetyRestriction]
-        [ReadOnly] public NativeArray<NativeList<int>> Neighbours;
-
-        public void Execute(int index)
-        {
-            Particle particle = Particles[index];
-            float densityConstraintGradientSum = 0f;
-            for (int i = 0; i < Neighbours[index].Length; i++)
-            {
-                Particle otherParticle = Particles[Neighbours[index][i]];
-                densityConstraintGradientSum += math.lengthsq(otherParticle.DensityConstraintGradient);
-            }
-            particle.DensityConstraintGradientSum = densityConstraintGradientSum;
+            particle.DensityConstraintGradientSum += math.lengthsq(densityConstraintGradient / particle.RestDensity);
             Particles[index] = particle;
         }
     }

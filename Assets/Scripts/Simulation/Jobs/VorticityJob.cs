@@ -73,7 +73,7 @@ public struct VorticityJob
             for (int i = 0; i < Neighbours[index].Length; i++)
             {
                 Particle otherParticle = Particles[Neighbours[index][i]];
-                float3 W = Kernels.Poly6Gradient(particle.PredictedPosition - otherParticle.PredictedPosition, Radius);
+                float3 W = Kernels.SpikyGradient(particle.PredictedPosition - otherParticle.PredictedPosition, Radius);
                 vorticityGradient += math.length(particle.Vorticity) * W;
             }
             particle.VorticityGradient = vorticityGradient;

@@ -16,7 +16,6 @@ public class SimulationManager : MonoBehaviour
     [SerializeField] private float _gravity = 9.81f;
     [SerializeField] private float _waterRatio = 0.1f;
     [SerializeField] private float _neighbourRadius;
-    [SerializeField] private float _smoothingRadius = 100;
     [SerializeField, Range(0, 2)] private float _crCoeff = 0.5f;
     [SerializeField, Range(0, 1)] private float _surfaceTension = 0.5f;
     [Header("Rendering")]
@@ -57,12 +56,12 @@ public class SimulationManager : MonoBehaviour
 
         _findNeighboursJob.Radius = _neighbourRadius;
 
-        _phaseJob.Radius = _smoothingRadius;
+        _phaseJob.Radius = _neighbourRadius;
         _phaseJob.DiffusionalCoefficient = _diffusionalCoefficient;
         _phaseJob.Epsilon = _epsilon;
 
         _densityConstraintJob.DeltaTime = Time.fixedDeltaTime;
-        _densityConstraintJob.Radius = _smoothingRadius;
+        _densityConstraintJob.Radius = _neighbourRadius;
 
         _updateParticlesJob.DeltaTime = Time.fixedDeltaTime;
         _updateParticlesJob.Epsilon = _epsilon;
@@ -71,10 +70,10 @@ public class SimulationManager : MonoBehaviour
         _environmentCollisionJob.CRCoeff = _crCoeff;
 
         _vorticityJob.DeltaTime = Time.fixedDeltaTime;
-        _vorticityJob.Radius = _smoothingRadius;
+        _vorticityJob.Radius = _neighbourRadius;
 
         _velocityGradientJob.DeltaTime = Time.fixedDeltaTime;
-        _velocityGradientJob.Radius = _smoothingRadius;
+        _velocityGradientJob.Radius = _neighbourRadius;
 
         JobHandle efHandle = _externalForcesJob.Schedule(_particles.Length, 64);
         efHandle.Complete();
@@ -129,7 +128,7 @@ public class SimulationManager : MonoBehaviour
             Gizmos.color = Color.white;
             Gizmos.DrawSphere(_particles[i].Position, _particleSize / 4);
             Gizmos.color = Color.blue;
-            Gizmos.DrawRay(_particles[i].Position, _particles[i].DensityConstraintGradient);
+            Gizmos.DrawRay(_particles[i].Position, _particles[i].Velocity);
         }
     }
 
@@ -171,9 +170,9 @@ public class SimulationManager : MonoBehaviour
         _gravity = float.Parse(gravity);
     }
 
-    public void SetSmoothingRadius(float radius)
+    public void SetNeighbourRadius(float radius)
     {
-        _smoothingRadius = radius * 10;
+        _neighbourRadius = radius / 10;
     }
 
     public void SetCRCoeff(float crCoeff)
@@ -324,6 +323,7 @@ public class SimulationManager : MonoBehaviour
                 particleMaterial = _particleMaterials[1];
             }
             Graphics.DrawMesh(_particleMesh, Matrix4x4.TRS(position, rotation, Vector3.one * _particleSize), particleMaterial, 0, Camera.main);
+            print($"Particle {i}: Position: {position}, D: {particle.Density}");
         }
     }
 
